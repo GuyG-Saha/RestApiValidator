@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 @Component
-public class ParameterPresenceAndTypeValidation implements ValidationRule {
+public class ParameterTypeValidation implements ValidationRule {
     @Override
     public boolean validate(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
         for (Map.Entry<String, Parameter> entry : modelParams.entrySet()) {
