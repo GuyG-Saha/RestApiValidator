@@ -6,15 +6,13 @@ import com.example.restapivalidator.repository.ApiSchemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-
+import java.util.*;
 @Service
 public class ApiValidationService {
     @Autowired
     private ApiSchemaRepository apiModelRepository;
+    @Autowired
+    private List<ValidationRule> validations;
     public Optional<ApiModel> findModelById(String id) {
         return apiModelRepository.findById(id);
     }
@@ -23,13 +21,16 @@ public class ApiValidationService {
         Map<String, Object> incomingHeaders = (Map<String, Object>) incomingRequest.get("headers");
         Map<String, Object> incomingQueryParams = (Map<String, Object>) incomingRequest.get("queryParams");
         Map<String, Object> incomingBody = (Map<String, Object>) incomingRequest.get("bodyParams");
-        if (!validateParams(incomingHeaders, apiModel.getHeaders())) {
-            return false;
+        return validateParamsNew(incomingHeaders, apiModel.getHeaders()) &&
+                validateParamsNew(incomingQueryParams, apiModel.getQueryParams()) &&
+                validateParamsNew(incomingBody, apiModel.getBodyParams());
+    }
+    private boolean validateParamsNew(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
+        for (ValidationRule validationRule : validations) {
+            if (!validationRule.validate(incomingParams, modelParams))
+                return false;
         }
-        if (!validateParams(incomingQueryParams, apiModel.getQueryParams())) {
-            return false;
-        }
-        return validateParams(incomingBody, apiModel.getBodyParams());
+        return true;
     }
     private boolean validateParams(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
         for (Map.Entry<String, Parameter> entry : modelParams.entrySet()) {
