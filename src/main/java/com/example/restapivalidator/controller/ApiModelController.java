@@ -16,17 +16,17 @@ import java.util.Optional;
 public class ApiModelController {
     @Autowired
     private ApiModelService service;
-    @PostMapping("/define-model")
+    @PostMapping("/models")
     public ResponseEntity<?> defineModel(@RequestBody ApiModel apiModel) {
         try {
             service.saveModel(apiModel);
-            return ResponseEntity.created(URI.create("/define-model"))
+            return ResponseEntity.created(URI.create("/models"))
                     .body(new CreationResponseDto("CREATED", LocalDateTime.now(), apiModel.getId()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new CreationResponseDto("ERROR", null, null));
         }
     }
-    @GetMapping("/get-model/{id}")
+    @GetMapping("/models/{id}")
     public ResponseEntity<?> getModel(@PathVariable String id) {
         Optional<ApiModel> model = service.findModelById(id);
         if (model.isPresent()) {

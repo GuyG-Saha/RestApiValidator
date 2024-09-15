@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/model-validator")
 public class ApiValidationController {
     @Autowired
     private ApiValidationService apiValidationService;
