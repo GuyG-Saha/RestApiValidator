@@ -1,6 +1,7 @@
 package com.example.restapivalidator.controller;
 
 import com.example.restapivalidator.model.ApiModel;
+import com.example.restapivalidator.service.ApiModelService;
 import com.example.restapivalidator.service.ApiValidationService;
 import com.example.restapivalidator.util.HashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ import java.util.Objects;
 public class ApiValidationController {
     @Autowired
     private ApiValidationService apiValidationService;
+    @Autowired
+    private ApiModelService apiModelService;
 
     @PostMapping("/validate")
     public ResponseEntity<?> validateModel(@RequestBody Map<String, Object> incomingRequest) {
@@ -29,7 +32,7 @@ public class ApiValidationController {
         String method = incomingRequest.get("method").toString().toUpperCase();
         String hashedId = HashUtil.generateHash(method + "-" + path).substring(0, 10);
         // Retrieve the stored API model
-        ApiModel apiModel = apiValidationService.findModelById(hashedId).orElse(null);
+        ApiModel apiModel = apiModelService.findModelById(hashedId).orElse(null);
         if (Objects.isNull(apiModel)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("API model not found for the given path and method.");
         }
