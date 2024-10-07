@@ -9,5 +9,6 @@ import java.util.List;
 @Data
 public class ValidationResponseDto {
     private String status;
+    private String message;
     private List<String> errors;
 }
