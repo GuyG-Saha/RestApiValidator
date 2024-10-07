@@ -28,10 +28,10 @@ public class ApiValidationController {
         ValidationResponseDto validationResult = apiValidationService.validateRequest(incomingRequest);
         return switch (validationResult.getStatus()) {
             case "200" -> ResponseEntity.ok("Request is valid.");
-            case "405" -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("API model not found");
+            case "405" -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(validationResult);
             case "400" -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request is invalid: "
                     + validationResult.getErrors().toString());
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error in server");
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(validationResult);
         };
     }
 }
