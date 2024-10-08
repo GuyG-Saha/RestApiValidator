@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 @Component
 public class RequiredFieldConsistencyValidation implements ValidationRule {
+    private final Map<String, String> faultyParamsDescription = new LinkedHashMap<>();
     @Override
     public ValidationResultDto validate(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
         ValidationResultDto resultDto = new ValidationResultDto();
@@ -15,11 +16,15 @@ public class RequiredFieldConsistencyValidation implements ValidationRule {
             String paramName = entry.getKey();
             Parameter paramModel = entry.getValue();
             if (paramModel.isRequired() &&
-                    ((LinkedHashMap) incomingParams
+                    ((LinkedHashMap<?, ?>) incomingParams
                             .get(paramName))
-                            .get("required").equals(false)) {
+                            .get("required")
+                            .equals(false)) {
                 resultDto.setValid(false);
-                resultDto.getFaultyParams().add(paramName);
+                faultyParamsDescription.put("ParameterName", paramName);
+                faultyParamsDescription.put("Required", String.valueOf(paramModel.isRequired()));
+                faultyParamsDescription.put("ActualValue", String.valueOf(false));
+                resultDto.getFaultyParams().add(faultyParamsDescription.toString());
             }
         }
         return resultDto;

@@ -4,10 +4,12 @@ import com.example.restapivalidator.dto.ValidationResultDto;
 import com.example.restapivalidator.model.Parameter;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
 public class RequiredFieldValidation implements ValidationRule {
+    private final Map<String, String> faultyParamsDescription = new LinkedHashMap<>();
     @Override
     public ValidationResultDto validate(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
         ValidationResultDto resultDto = new ValidationResultDto();
@@ -16,7 +18,9 @@ public class RequiredFieldValidation implements ValidationRule {
             Parameter paramModel = entry.getValue();
             if (paramModel.isRequired() && !incomingParams.containsKey(paramName)) {
                 resultDto.setValid(false);
-                resultDto.getFaultyParams().add(paramName);
+                faultyParamsDescription.put("ParameterName", paramName);
+                faultyParamsDescription.put("RequiredField", "Missing");
+                resultDto.getFaultyParams().add(faultyParamsDescription.toString());
             }
         }
         return resultDto;
