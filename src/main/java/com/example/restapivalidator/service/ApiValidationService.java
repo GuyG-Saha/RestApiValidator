@@ -11,18 +11,17 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 @Service
 public class ApiValidationService {
-    private Map<String, String> detectedWrongParams;
     @Autowired
     private List<ValidationRule> validations;
     @Autowired
     ApiModelService apiModelService;
 
     public ApiValidationService() {
-        detectedWrongParams = new HashMap<String, String>();
-    }
 
+    }
     public ValidationResponseDto validateRequest(Map<String, Object> incomingRequest) {
-        // Extract headers, query params, and body from the incoming request
+        Map<String, List<String>> errorMap = new HashMap<>();
+        // Extract path and method from the incoming request
         String path = (String) incomingRequest.get("path");
         String method = incomingRequest.get("method").toString().toUpperCase();
         String hashedId = HashUtil.generateHash(method + "-" + path).substring(0, 10);
@@ -33,32 +32,27 @@ public class ApiValidationService {
             status = "405";
             return new ValidationResponseDto(status, "Cannot find a matching model", null);
         }
+        // Extract headers, query params, and body from the incoming request
         Map<String, Object> incomingHeaders = (Map<String, Object>) incomingRequest.get("headers");
         Map<String, Object> incomingQueryParams = (Map<String, Object>) incomingRequest.get("queryParams");
         Map<String, Object> incomingBody = (Map<String, Object>) incomingRequest.get("bodyParams");
-        List<String> errors = new ArrayList<>();
-        ValidationResultDto result = validateParams(incomingHeaders, apiModel.getHeaders());
-        if (!result.isValid()) {
+        // Validate each part of the request and collect errors
+        validateAndCollectErrors("Headers", incomingHeaders, apiModel.getHeaders(), errorMap);
+        validateAndCollectErrors("QueryParams", incomingQueryParams, apiModel.getQueryParams(), errorMap);
+        validateAndCollectErrors("BodyParams", incomingBody, apiModel.getBodyParams(), errorMap);
+        if (!errorMap.isEmpty()) {
             status = "400";
-            errors.add("Headers: ");
-            errors.add(result.getFaultyParams().toString());
-            return new ValidationResponseDto(status, "Error Occurred", errors);
+            return new ValidationResponseDto(status, "Error Occurred", errorMap);
         }
-        result = validateParams(incomingQueryParams, apiModel.getQueryParams());
+        return new ValidationResponseDto(status, "No Errors", null);
+    }
+    private void validateAndCollectErrors(String section, Map<String, Object> incomingParams,
+                                          Map<String, Parameter> expectedParams,
+                                          Map<String, List<String>> errorMap) {
+        ValidationResultDto result = validateParams(incomingParams, expectedParams);
         if (!result.isValid()) {
-            status = "400";
-            errors.add("QueryParams: ");
-            errors.add(result.getFaultyParams().toString());
-            return new ValidationResponseDto(status, "Error Occurred", errors);
+            errorMap.computeIfAbsent(section, k -> new ArrayList<>()).addAll(result.getFaultyParams());
         }
-        result = validateParams(incomingBody, apiModel.getBodyParams());
-        if (!result.isValid()) {
-            status = "400";
-            errors.add("BodyParams: ");
-            errors.add(result.getFaultyParams().toString());
-            return new ValidationResponseDto(status, "Error Occurred", errors);
-        }
-        return new ValidationResponseDto(status, "No Errors", errors);
     }
     private ValidationResultDto validateParams(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
         ValidationResultDto result = new ValidationResultDto();
