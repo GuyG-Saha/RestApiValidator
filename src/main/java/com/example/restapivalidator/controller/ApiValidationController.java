@@ -1,7 +1,6 @@
 package com.example.restapivalidator.controller;
 
 import com.example.restapivalidator.dto.ValidationResponseDto;
-import com.example.restapivalidator.service.ApiModelService;
 import com.example.restapivalidator.service.ApiValidationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,14 +23,20 @@ public class ApiValidationController {
         return validateModelUtil(incomingRequest);
     }
     public ResponseEntity<?> validateModelUtil(Map<String, Object> incomingRequest) {
-        // Validate headers, query params, and body
         ValidationResponseDto validationResult = apiValidationService.validateRequest(incomingRequest);
         return switch (validationResult.getStatus()) {
-            case "200" -> ResponseEntity.ok("Request is valid.");
-            case "405" -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("API model not found");
-            case "400" -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request is invalid: "
-                    + validationResult.getErrors().toString());
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error in server");
+            case "200" -> {
+                validationResult.setMessage("Request is valid");
+                yield ResponseEntity.ok(validationResult);
+            }
+            case "405" -> {
+                validationResult.setMessage("API model not found, please check HTTP method and path");
+                yield ResponseEntity.status(HttpStatus.NOT_FOUND).body(validationResult); }
+            case "400" -> {
+                validationResult.setMessage("Request is invalid");
+                yield ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationResult);
+            }
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(validationResult);
         };
     }
 }

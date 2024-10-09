@@ -1,6 +1,7 @@
 package com.example.restapivalidator.service;
 
 import com.example.restapivalidator.dto.ValidationResponseDto;
+import com.example.restapivalidator.dto.ValidationResultDto;
 import com.example.restapivalidator.model.ApiModel;
 import com.example.restapivalidator.model.Parameter;
 import com.example.restapivalidator.util.HashUtil;
@@ -15,8 +16,12 @@ public class ApiValidationService {
     @Autowired
     ApiModelService apiModelService;
 
+    public ApiValidationService() {
+
+    }
     public ValidationResponseDto validateRequest(Map<String, Object> incomingRequest) {
-        // Extract headers, query params, and body from the incoming request
+        Map<String, List<String>> errorMap = new HashMap<>();
+        // Extract path and method from the incoming request
         String path = (String) incomingRequest.get("path");
         String method = incomingRequest.get("method").toString().toUpperCase();
         String hashedId = HashUtil.generateHash(method + "-" + path).substring(0, 10);
@@ -25,31 +30,42 @@ public class ApiValidationService {
         ApiModel apiModel = apiModelService.findModelById(hashedId).orElse(null);
         if (Objects.isNull(apiModel)) {
             status = "405";
-            return new ValidationResponseDto(status, null);
+            return new ValidationResponseDto(status, "Cannot find a matching model", null);
         }
+        // Extract headers, query params, and body from the incoming request
         Map<String, Object> incomingHeaders = (Map<String, Object>) incomingRequest.get("headers");
         Map<String, Object> incomingQueryParams = (Map<String, Object>) incomingRequest.get("queryParams");
         Map<String, Object> incomingBody = (Map<String, Object>) incomingRequest.get("bodyParams");
-        List<String> errors = new ArrayList<>();
-        if (!validateParams(incomingHeaders, apiModel.getHeaders())) {
+        // Validate each part of the request and collect errors
+        validateAndCollectErrors("Headers", incomingHeaders, apiModel.getHeaders(), errorMap);
+        validateAndCollectErrors("QueryParams", incomingQueryParams, apiModel.getQueryParams(), errorMap);
+        validateAndCollectErrors("BodyParams", incomingBody, apiModel.getBodyParams(), errorMap);
+        if (!errorMap.isEmpty()) {
             status = "400";
-            errors.add("Headers");
+            return new ValidationResponseDto(status, "Error Occurred", errorMap);
         }
-        if (!validateParams(incomingQueryParams, apiModel.getQueryParams())) {
-            status = "400";
-            errors.add("QueryParams");
-        }
-        if (!validateParams(incomingBody, apiModel.getBodyParams())) {
-            status = "400";
-            errors.add("Body");
-        }
-        return new ValidationResponseDto(status, errors);
+        return new ValidationResponseDto(status, "No Errors", null);
     }
-    private boolean validateParams(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
-        for (ValidationRule validationRule : validations) {
-            if (!validationRule.validate(incomingParams, modelParams))
-                return false;
+    private void validateAndCollectErrors(String section, Map<String, Object> incomingParams,
+                                          Map<String, Parameter> expectedParams,
+                                          Map<String, List<String>> errorMap) {
+        ValidationResultDto result = validateParams(incomingParams, expectedParams);
+        if (!result.isValid()) {
+            errorMap.computeIfAbsent(section, k -> new ArrayList<>()).addAll(result.getFaultyParams());
         }
-        return true;
+    }
+    private ValidationResultDto validateParams(Map<String, Object> incomingParams, Map<String, Parameter> modelParams) {
+        ValidationResultDto result = new ValidationResultDto();
+        HashSet<String> params = new HashSet<>();
+        for (ValidationRule validationRule : validations) {
+            ValidationResultDto resultDto = validationRule.validate(incomingParams, modelParams);
+            if (!resultDto.isValid()) {
+                params.addAll(resultDto.getFaultyParams());
+                if (result.isValid())
+                    result.setValid(false);
+                result.setFaultyParams(params);
+            }
+        }
+        return result;
     }
 }
