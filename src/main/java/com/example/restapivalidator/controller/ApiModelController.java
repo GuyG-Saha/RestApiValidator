@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -34,5 +35,10 @@ public class ApiModelController {
         } else {
             return ResponseEntity.status(404).body("Model not found");
         }
+    }
+    @GetMapping("/models")
+    public ResponseEntity<?> getAllModels() {
+        List<ApiModel> models = service.findAll();
+        return ResponseEntity.ok(models);
     }
 }
