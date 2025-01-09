@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.List;
 @Component
 @Slf4j
 public class ParameterTypeValidation implements ValidationRule {
@@ -23,11 +24,11 @@ public class ParameterTypeValidation implements ValidationRule {
             if (Objects.nonNull(incomingDataType)) {
                 try {
                     ParameterType expectedType = paramModel.getType();
-                    String actualType = extractActualType(incomingDataType);
-                    if (!isTypeMatching(actualType, expectedType)) {
+                    //Object actualType = incomingDataType.getClass();
+                    if (!isTypeMatching(incomingDataType, expectedType)) {
                         faultyParamsDescription.put("ParameterName", paramName);
                         faultyParamsDescription.put("ExpectedType", expectedType.name().toLowerCase());
-                        faultyParamsDescription.put("ActualType", actualType.toLowerCase());
+                        faultyParamsDescription.put("ActualType", incomingDataType.getClass().getSimpleName());
                         resultDto.setValid(false);
                         resultDto.getFaultyParams().add(faultyParamsDescription.toString());
                     }
@@ -48,12 +49,38 @@ public class ParameterTypeValidation implements ValidationRule {
         }
         throw new IllegalArgumentException("Invalid parameter structure");
     }
-    private boolean isTypeMatching(String actualType, ParameterType expectedType) {
-        try {
-            ParameterType actual = ParameterType.fromString(actualType);
-            return actual == expectedType;
-        } catch (IllegalArgumentException e) {
-            return false;
+    private boolean isTypeMatchingReflection(Object incomingData, Class<?> expectedType) {
+        // Use reflection to check if the types match
+        if (expectedType.isAssignableFrom(incomingData.getClass())) {
+            return true;
+        }
+        // Handle collections (lists)
+        if (expectedType.isAssignableFrom(List.class) && incomingData instanceof List) {
+            List<?> incomingList = (List<?>) incomingData;
+            if (!incomingList.isEmpty() && expectedType.getComponentType() != null) {
+                return incomingList.stream().allMatch(item -> item.getClass().isAssignableFrom(expectedType.getComponentType()));
+            }
+        }
+        return false;
+    }
+    private boolean isTypeMatching(Object value, ParameterType expectedType) {
+        switch (expectedType) {
+            case STRING:
+                return value instanceof String;
+            case INTEGER:
+                return value instanceof Integer;
+            case DOUBLE:
+                return value instanceof Double;
+            case BOOLEAN:
+                return value instanceof Boolean;
+            case LIST:
+                return value instanceof List;
+            case MAP:
+                return value instanceof Map;
+            case DATE:
+                return value instanceof java.time.LocalDate; // Assuming LocalDate for DATE
+            default:
+                return false; // Fallback for unknown types
         }
     }
 }

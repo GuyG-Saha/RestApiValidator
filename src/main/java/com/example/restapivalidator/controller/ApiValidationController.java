@@ -36,7 +36,7 @@ public class ApiValidationController {
                 validationResult.setMessage("Request is invalid");
                 yield ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationResult);
             }
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(validationResult);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(validationResult.getErrors());
         };
     }
 }
