@@ -24,7 +24,6 @@ public class ParameterTypeValidation implements ValidationRule {
             if (Objects.nonNull(incomingDataType)) {
                 try {
                     ParameterType expectedType = paramModel.getType();
-                    //Object actualType = incomingDataType.getClass();
                     if (!isTypeMatching(incomingDataType, expectedType)) {
                         faultyParamsDescription.put("ParameterName", paramName);
                         faultyParamsDescription.put("ExpectedType", expectedType.name().toLowerCase());
