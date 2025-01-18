@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class Parameter {
-    private String type;
+    private ParameterType type;
     private boolean required;
 }

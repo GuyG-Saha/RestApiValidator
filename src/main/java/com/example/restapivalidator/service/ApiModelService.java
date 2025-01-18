@@ -4,6 +4,8 @@ import com.example.restapivalidator.model.ApiModel;
 import com.example.restapivalidator.repository.ApiSchemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 import com.example.restapivalidator.util.HashUtil;
@@ -20,5 +22,9 @@ public class ApiModelService {
     }
     public Optional<ApiModel> findModelById(String id) {
         return apiModelRepository.findById(id);
+    }
+
+    public List<ApiModel> findAll() {
+        return apiModelRepository.findAll();
     }
 }
