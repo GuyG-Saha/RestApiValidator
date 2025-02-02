@@ -45,12 +45,6 @@ public class ParameterTypeValidation implements ValidationRule {
         }
         return resultDto;
     }
-    private String extractActualType(Object value) {
-        if (value instanceof Map<?, ?> typeInfo) {
-            return typeInfo.get("type").toString();
-        }
-        throw new IllegalArgumentException("Invalid parameter structure");
-    }
     private boolean isTypeMatchingReflection(Object incomingData, Class<?> expectedType) {
         // Use reflection to check if the types match
         if (expectedType.isAssignableFrom(incomingData.getClass())) {
