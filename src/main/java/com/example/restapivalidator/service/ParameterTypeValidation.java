@@ -60,23 +60,15 @@ public class ParameterTypeValidation implements ValidationRule {
         return false;
     }
     private boolean isTypeMatching(Object value, ParameterType expectedType) {
-        switch (expectedType) {
-            case STRING:
-                return value instanceof String;
-            case INTEGER:
-                return value instanceof Integer;
-            case DOUBLE:
-                return value instanceof Double;
-            case BOOLEAN:
-                return value instanceof Boolean;
-            case LIST:
-                return value instanceof List;
-            case MAP:
-                return value instanceof Map;
-            case DATE:
-                return isValidLocalDate(value.toString()); // depends on ISO LocalDate successful parsing
-            default:
-                return false; // Fallback for unknown types
-        }
+        return switch (expectedType) {
+            case STRING -> value instanceof String;
+            case INTEGER -> value instanceof Integer;
+            case DOUBLE -> value instanceof Double;
+            case BOOLEAN -> value instanceof Boolean;
+            case LIST -> value instanceof List;
+            case MAP -> value instanceof Map;
+            case DATE -> isValidLocalDate(value.toString()); // depends on ISO LocalDate successful parsing
+            default -> false; // Fallback for unknown types
+        };
     }
 }
