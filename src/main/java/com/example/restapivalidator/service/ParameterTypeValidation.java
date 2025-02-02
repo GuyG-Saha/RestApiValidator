@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.List;
+
+import static com.example.restapivalidator.util.DatesUtil.isValidLocalDate;
+
 @Component
 @Slf4j
 public class ParameterTypeValidation implements ValidationRule {
@@ -77,7 +80,7 @@ public class ParameterTypeValidation implements ValidationRule {
             case MAP:
                 return value instanceof Map;
             case DATE:
-                return value instanceof java.time.LocalDate; // Assuming LocalDate for DATE
+                return isValidLocalDate(value.toString()); // depends on ISO LocalDate successful parsing
             default:
                 return false; // Fallback for unknown types
         }
