@@ -22,9 +22,9 @@ public class ApiModelController {
         try {
             service.saveModel(apiModel);
             return ResponseEntity.created(URI.create("/models"))
-                    .body(new CreationResponseDto("CREATED", LocalDateTime.now(), apiModel.getId()));
+                    .body(new CreationResponseDto("CREATED", null, LocalDateTime.now(), apiModel.getId()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new CreationResponseDto("ERROR", null, null));
+            return ResponseEntity.badRequest().body(new CreationResponseDto("ERROR", e.getMessage(), null, null));
         }
     }
     @GetMapping("/models/{id}")

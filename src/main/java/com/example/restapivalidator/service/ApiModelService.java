@@ -1,12 +1,12 @@
 package com.example.restapivalidator.service;
 
-import com.example.restapivalidator.model.ApiModel;
+import com.example.restapivalidator.model.*;
 import com.example.restapivalidator.repository.ApiSchemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import com.example.restapivalidator.util.HashUtil;
 
@@ -14,7 +14,15 @@ import com.example.restapivalidator.util.HashUtil;
 public class ApiModelService {
     @Autowired
     ApiSchemaRepository apiModelRepository;
+    private static final Set<HttpMethod> ALLOWED_METHODS = Set.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
+
     public void saveModel(ApiModel apiModel) {
+        validatePath(apiModel.getPath());
+        validateMethod(apiModel.getMethod());
+        validateParameters(apiModel.getHeaders());
+        validateParameters(apiModel.getQueryParams());
+        validateParameters(apiModel.getBodyParams());
+
         String apiModelId = HashUtil.generateHash(apiModel.getMethod().toUpperCase() +
                 "-" + apiModel.getPath()).substring(0, 10);
         apiModel.setId(apiModelId);
@@ -27,4 +35,38 @@ public class ApiModelService {
     public List<ApiModel> findAll() {
         return apiModelRepository.findAll();
     }
+
+    private void validatePath(String path) {
+        if (path == null || !path.matches("^/[a-zA-Z0-9_/{}/-]+$")) {
+            throw new IllegalArgumentException("Invalid API path: " + path);
+        }
+    }
+    private void validateMethod(String method) {
+        try {
+            HttpMethod httpMethod = HttpMethod.valueOf(method.toUpperCase());
+            if (!ALLOWED_METHODS.contains(httpMethod)) {
+                throw new IllegalArgumentException("Method not allowed: " + method);
+            }
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new IllegalArgumentException("Invalid HTTP method: " + method);
+        }
+    }
+    private void validateParameters(Map<String, Parameter> parameters) {
+        if (Objects.nonNull(parameters)) {
+            for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
+                String paramName = entry.getKey();
+                Parameter param = entry.getValue();
+                if (!paramName.matches("^[a-zA-Z0-9_-]+$")) {
+                    throw new IllegalArgumentException("Invalid parameter name: " + paramName);
+                }
+                if (param.getType() == null) {
+                    throw new IllegalArgumentException("Missing type for parameter: " + paramName);
+                }
+                if (!ParameterType.getStringToEnum().containsKey(param.getType().toLowerCase())) {
+                    throw new IllegalArgumentException("Invalid ParameterType: " + param.getType());
+                }
+            }
+        }
+    }
+
 }

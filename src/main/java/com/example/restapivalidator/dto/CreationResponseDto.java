@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 public class CreationResponseDto {
     private String status;
+    private String errorMessage;
     private LocalDateTime creationTime;
     private String modelId;
 }

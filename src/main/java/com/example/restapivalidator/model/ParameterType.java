@@ -32,6 +32,9 @@ public enum ParameterType {
     public Class<?> getClazz() {
         return clazz;
     }
+    public static Map<String, ParameterType> getStringToEnum() {
+        return STRING_TO_ENUM;
+    }
     @JsonValue
     public String toLowerCase() {
         return this.name().toLowerCase(Locale.ROOT);
