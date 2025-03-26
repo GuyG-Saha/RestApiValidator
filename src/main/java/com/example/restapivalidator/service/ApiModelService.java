@@ -2,6 +2,9 @@ package com.example.restapivalidator.service;
 
 import com.example.restapivalidator.model.*;
 import com.example.restapivalidator.repository.ApiSchemaRepository;
+import com.example.restapivalidator.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -16,11 +19,20 @@ public class ApiModelService {
     ApiSchemaRepository apiModelRepository;
     private static final Set<HttpMethod> ALLOWED_METHODS = Set.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
 
-    public void saveModel(ApiModel apiModel) {
+    public void saveModel(ApiModel apiModel) throws JsonProcessingException {
         validatePath(apiModel.getPath());
         validateMethod(apiModel.getMethod());
+
+        String jsonSchemaHeaders = new ObjectMapper().writeValueAsString(apiModel.getHeaders());
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaHeaders);
         validateParameters(apiModel.getHeaders());
+
+        String jsonSchemaQueryParams = new ObjectMapper().writeValueAsString(apiModel.getQueryParams());
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaQueryParams);
         validateParameters(apiModel.getQueryParams());
+
+        String jsonSchemaBodyParams = new ObjectMapper().writeValueAsString(apiModel.getBodyParams());
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaBodyParams);
         validateParameters(apiModel.getBodyParams());
 
         String apiModelId = HashUtil.generateHash(apiModel.getMethod().toUpperCase() +
