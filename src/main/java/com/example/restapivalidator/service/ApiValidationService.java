@@ -5,6 +5,9 @@ import com.example.restapivalidator.dto.ValidationResultDto;
 import com.example.restapivalidator.model.ApiModel;
 import com.example.restapivalidator.model.Parameter;
 import com.example.restapivalidator.util.HashUtil;
+import com.example.restapivalidator.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +22,7 @@ public class ApiValidationService {
     public ApiValidationService() {
 
     }
-    public ValidationResponseDto validateRequest(Map<String, Object> incomingRequest) {
+    public ValidationResponseDto validateRequest(Map<String, Object> incomingRequest) throws JsonProcessingException {
         Map<String, List<String>> errorMap = new HashMap<>();
         // Extract path and method from the incoming request
         String path = (String) incomingRequest.get("path");
@@ -37,8 +40,14 @@ public class ApiValidationService {
         Map<String, Object> incomingQueryParams = (Map<String, Object>) incomingRequest.get("queryParams");
         Map<String, Object> incomingBody = (Map<String, Object>) incomingRequest.get("bodyParams");
         // Validate each part of the request and collect errors
+        String jsonSchemaHeaders = new ObjectMapper().writeValueAsString(incomingRequest.get("headers"));
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaHeaders);
         validateAndCollectErrors("Headers", incomingHeaders, apiModel.getHeaders(), errorMap);
+        String jsonSchemaQueryParams = new ObjectMapper().writeValueAsString(incomingRequest.get("queryParams"));
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaQueryParams);
         validateAndCollectErrors("QueryParams", incomingQueryParams, apiModel.getQueryParams(), errorMap);
+        String jsonSchemaBodyParams = new ObjectMapper().writeValueAsString(incomingRequest.get("bodyParams"));
+        JsonUtil.validateJsonSchemaDepth(jsonSchemaBodyParams);
         validateAndCollectErrors("BodyParams", incomingBody, apiModel.getBodyParams(), errorMap);
         if (!errorMap.isEmpty()) {
             status = "400";

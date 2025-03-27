@@ -14,7 +14,7 @@ public enum ParameterType {
     DOUBLE(Double.class),
     BOOLEAN(Boolean.class),
     LIST(List.class),
-    MAP(Map.class),
+    MAP(Map.class), // Acts as an object
     DATE(java.time.LocalDate.class);
 
     private final Class<?> clazz;

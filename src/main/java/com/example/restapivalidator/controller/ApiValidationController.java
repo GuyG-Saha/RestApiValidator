@@ -2,6 +2,7 @@ package com.example.restapivalidator.controller;
 
 import com.example.restapivalidator.dto.ValidationResponseDto;
 import com.example.restapivalidator.service.ApiValidationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,16 @@ public class ApiValidationController {
     private ApiValidationService apiValidationService;
 
     @PostMapping("/validate")
-    public ResponseEntity<?> validateModel(@RequestBody Map<String, Object> incomingRequest) {
-        return validateModelUtil(incomingRequest);
+    public ResponseEntity<?> validateModel(@RequestBody Map<String, Object> incomingRequest) throws JsonProcessingException {
+        try {
+            return validateModelUtil(incomingRequest);
+        } catch (IllegalArgumentException e) {
+            ValidationResponseDto validationResult = new ValidationResponseDto(HttpStatus.BAD_REQUEST.name(),
+                    e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationResult);
+        }
     }
-    public ResponseEntity<?> validateModelUtil(Map<String, Object> incomingRequest) {
+    public ResponseEntity<?> validateModelUtil(Map<String, Object> incomingRequest) throws JsonProcessingException {
         ValidationResponseDto validationResult = apiValidationService.validateRequest(incomingRequest);
         return switch (validationResult.getStatus()) {
             case "200" -> {
